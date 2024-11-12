@@ -1,30 +1,63 @@
-const N_BASIC_ACTIONS = 5
-const BASIC_ACTIONS_DICT = Dict(:sample => 1,
-                                :north => 2, 
-                                :east => 3,
-                                :south => 4,
-                                :west => 5)
+const MOVEMENT_ACTIONS = [:up, :down, :left, :right]
 
-const ACTION_DIRS = (RSPos(0,0),
-                    RSPos(0,1),
-                    RSPos(1,0),
-                    RSPos(0,-1),
-                    RSPos(-1,0))
+function generate_teleport_actions(grid_size::Tuple{Int, Int})
+    nx, ny = grid_size
+    return [(x, y) for x in 1:nx, y in 1:ny]
+end
 
-POMDPs.actions(pomdp::RockSamplePOMDP{K}) where K = 1:N_BASIC_ACTIONS+K
-POMDPs.actionindex(pomdp::RockSamplePOMDP, a::Int) = a
-
-function POMDPs.actions(pomdp::RockSamplePOMDP{K}, s::RSState) where K
-    if in(s.pos, pomdp.rocks_positions) # slow? pomdp.rock_pos is a vec 
-        return actions(pomdp)
+# movement actions and teleportation actions
+function POMDPs.actions(pomdp::GraphExplorationPOMDP)
+    teleport_actions = generate_teleport_actions(pomdp.grid_size)
+    return vcat(MOVEMENT_ACTIONS, teleport_actions)
+end
+# Maps an action to its index.
+# Movement actions are indices 1 to 4.
+# Teleportation actions are indices 5 to 4 + (nx * ny)
+function POMDPs.actionindex(pomdp::GraphExplorationPOMDP, a)
+    if a in MOVEMENT_ACTIONS
+        return findfirst(isequal(a), MOVEMENT_ACTIONS)
+    elseif a isa Tuple{Int, Int}
+        nx, ny = pomdp.grid_size
+        x, y = a
+        # Validate position
+        if x < 1 || x > nx || y < 1 || y > ny
+            error("Invalid teleport action: position out of bounds.")
+        end
+        index = length(MOVEMENT_ACTIONS) + (x - 1) * ny + y
+        return index
     else
-        # sample not available
-        return 2:N_BASIC_ACTIONS+K
+        error("Invalid action.")
     end
 end
 
-function POMDPs.actions(pomdp::RockSamplePOMDP, b)
-    # All states in a belief should have the same position, which is what the valid action space depends on
-    state = rand(Random.GLOBAL_RNG, b) 
-    return actions(pomdp, state)
+# tells which actions are valid given a state
+function POMDPs.actions(pomdp::GraphExplorationPOMDP, s::GraphState)
+    nx, ny = pomdp.grid_size
+    x, y = s.pos
+
+    available_actions = []
+
+    # Movement actions with bounds checking
+    if y < ny
+        push!(available_actions, :up)
+    end
+    if y > 1
+        push!(available_actions, :down)
+    end
+    if x > 1
+        push!(available_actions, :left)
+    end
+    if x < nx
+        push!(available_actions, :right)
+    end
+
+    # Teleport actions (available at all times)
+    teleport_actions = generate_teleport_actions(pomdp.grid_size)
+
+    return vcat(available_actions, teleport_actions)
+end
+
+function POMDPs.actions(pomdp::GraphExplorationPOMDP, b)
+    state = rand(b)
+    return POMDPs.actions(pomdp, state)
 end
