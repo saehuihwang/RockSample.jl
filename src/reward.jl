@@ -1,15 +1,40 @@
-function POMDPs.reward(pomdp::RockSamplePOMDP, s::RSState, a::Int)
-    r = pomdp.step_penalty
-    if next_position(s, a)[1] > pomdp.map_size[1]
-        r += pomdp.exit_reward
-        return r
+function POMDPs.reward(pomdp::GraphExplorationPOMDP, s::GraphState, a::GraphAction)
+    # Apply the action to get the new position
+    new_pos = apply_action(s.pos, a, pomdp.grid_size)
+    
+    # Initialize reward
+    reward = 0
+
+    # Copy the visited statuses from the current state
+    visited_vertices = s.visited_vertices
+    visited_edges = s.visited_edges
+
+    # Check if there's a vertex at the new position
+    v_id = find_vertex_at_position(new_pos, pomdp.position_to_vertex)
+    if v_id !== nothing
+        if !s.visited_vertices[v_id]
+            reward += 1  # Visiting a new vertex for the first time
+            visited_vertices = Base.setindex(visited_vertices, true, v_id)
+        else
+            reward -= 1  # Revisiting a vertex
+        end
     end
 
-    if a == BASIC_ACTIONS_DICT[:sample] && in(s.pos, pomdp.rocks_positions) # sample 
-        rock_ind = findfirst(isequal(s.pos), pomdp.rocks_positions) # slow ?
-        r += s.rocks[rock_ind] ? pomdp.good_rock_reward : pomdp.bad_rock_penalty 
-    elseif a > N_BASIC_ACTIONS # using senssor
-        r += pomdp.sensor_use_penalty
+    # Check if there's an edge at the new position
+    e_id = find_edge_at_position(new_pos, pomdp.position_to_edge)
+    if e_id !== nothing
+        if !s.visited_edges[e_id]
+            reward += 1  # Visiting a new edge for the first time
+            visited_edges = Base.setindex(visited_edges, true, e_id)
+        else
+            reward -= 1  # Revisiting an edge
+        end
     end
-    return r
+
+    # Check if exploration is complete
+    if all(visited_vertices) && all(visited_edges)
+        reward += 10  # Completing exploration of the entire graph
+    end
+
+    return reward
 end

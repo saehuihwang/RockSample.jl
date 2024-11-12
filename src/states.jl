@@ -1,4 +1,4 @@
-function POMDPs.stateindex(pomdp::RockSamplePOMDP{K}, s::RSState{K}) where K
+function POMDPs.stateindex(pomdp::GraphExplorationPOMDP{NVertices, NEdges}, s::GraphState{NVertices, NEdges}) where {NVertices, NEdges}
     if isterminal(pomdp, s)
         return length(pomdp)
     end

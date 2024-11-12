@@ -1,22 +1,28 @@
-const OBSERVATION_NAME = (:good, :bad, :none)
+# Define GraphObservation
+struct GraphObservation
+    vertex::Union{Int, Nothing}               # Vertex ID or nothing
+    edge::Union{Int, Nothing}                 # Edge ID or nothing
+end
+# observation function
+function POMDPs.observation(pomdp::GraphExplorationPOMDP, a::GraphAction, s::GraphState, sp::GraphState)
+    # Observation depends on the new state sp
+    obs = observation_from_state(pomdp, sp)
+    return Deterministic(obs)
+end
 
-POMDPs.observations(pomdp::RockSamplePOMDP) = 1:3
-POMDPs.obsindex(pomdp::RockSamplePOMDP, o::Int) = o
+# Helper function to get observation from state
+function observation_from_state(pomdp::GraphExplorationPOMDP, s::GraphState)
+    v = find_vertex_at_position(s.pos, pomdp.position_to_vertex)
+    e = find_edge_at_position(s.pos, pomdp.position_to_edge)
+    return GraphObservation(v, e)
+end
 
-function POMDPs.observation(pomdp::RockSamplePOMDP, a::Int, s::RSState)
-    if a <= N_BASIC_ACTIONS
-        # no obs
-        return SparseCat((1,2,3), (0.0,0.0,1.0)) # for type stability
-    else
-        rock_ind = a - N_BASIC_ACTIONS 
-        rock_pos = pomdp.rocks_positions[rock_ind]
-        dist = norm(rock_pos - s.pos)
-        efficiency = 0.5*(1.0 + exp(-dist*log(2)/pomdp.sensor_efficiency))
-        rock_state = s.rocks[rock_ind]
-        if rock_state
-            return SparseCat((1,2,3), (efficiency, 1.0 - efficiency, 0.0))
-        else
-            return SparseCat((1,2,3), (1.0 - efficiency, efficiency, 0.0))
-        end
-    end
+# find_vertex_at_position function
+function find_vertex_at_position(pos::Tuple{Int, Int}, position_to_vertex::Dict{Tuple{Int, Int}, Int})
+    return get(position_to_vertex, pos, nothing)
+end
+
+# find_edge_at_position function
+function find_edge_at_position(pos::Tuple{Int, Int}, position_to_edge::Dict{Tuple{Int, Int}, Int})
+    return get(position_to_edge, pos, nothing)
 end
