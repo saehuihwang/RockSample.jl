@@ -1,8 +1,9 @@
-# Define GraphObservation
-struct GraphObservation
-    vertex::Union{Int, Nothing}               # Vertex ID or nothing
-    edge::Union{Int, Nothing}                 # Edge ID or nothing
-end
+# specifies what the agent observes after taking an action and transitioning to a new state.
+# The observations are deterministic in this model.
+
+# The file also includes helper functions to find vertices and edges at a given position.
+
+
 # observation function
 function POMDPs.observation(pomdp::GraphExplorationPOMDP, a::GraphAction, s::GraphState, sp::GraphState)
     # Observation depends on the new state sp
@@ -18,11 +19,11 @@ function observation_from_state(pomdp::GraphExplorationPOMDP, s::GraphState)
 end
 
 # find_vertex_at_position function
-function find_vertex_at_position(pos::Tuple{Int, Int}, position_to_vertex::Dict{Tuple{Int, Int}, Int})
+function find_vertex_at_position(pos::GraphPos, position_to_vertex::Dict{Tuple{Int, Int}, Int})
     return get(position_to_vertex, pos, nothing)
 end
 
 # find_edge_at_position function
-function find_edge_at_position(pos::Tuple{Int, Int}, position_to_edge::Dict{Tuple{Int, Int}, Int})
+function find_edge_at_position(pos::GraphPos, position_to_edge::Dict{Tuple{Int, Int}, Int})
     return get(position_to_edge, pos, nothing)
 end

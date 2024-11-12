@@ -1,3 +1,7 @@
+# implementing required state-related functions for the POMDPs.jl framework
+# such as state indexing, state reconstruction from indices, and state space iteration.
+
+# Map a state to a unique index.
 function POMDPs.stateindex(pomdp::GraphExplorationPOMDP{NVertices, NEdges}, s::GraphState{NVertices, NEdges}) where {NVertices, NEdges}
     if isterminal(pomdp, s)
         return length(pomdp)
@@ -16,7 +20,7 @@ function POMDPs.stateindex(pomdp::GraphExplorationPOMDP{NVertices, NEdges}, s::G
     num_vertex_states = 2^NVertices
     num_edge_states = 2^NEdges
 
-    # Combine indices
+    # Combine indices to get a unique state index
     index = pos_index +
             nx * ny * vertex_index +
             nx * ny * num_vertex_states * edge_index
@@ -48,7 +52,7 @@ function state_from_index(pomdp::GraphExplorationPOMDP{NVertices, NEdges}, index
     # Reconstruct agent's position
     x = (pos_index % nx) + 1
     y = div(pos_index, nx) + 1
-    pos = (x, y)
+    pos = GraphPos(x, y)
 
     # Reconstruct visited vertices and edges
     visited_vertices = SVector{NVertices, Bool}([Bool((vertex_index >> i) & 1) for i in 0:NVertices-1])
@@ -60,6 +64,7 @@ end
 # the state space is the pomdp itself
 POMDPs.states(pomdp::GraphExplorationPOMDP) = pomdp
 
+# Calculates the total number of states
 function Base.length(pomdp::GraphExplorationPOMDP{NVertices, NEdges}) where {NVertices, NEdges}
     nx, ny = pomdp.grid_size
     num_positions = nx * ny
@@ -68,18 +73,11 @@ function Base.length(pomdp::GraphExplorationPOMDP{NVertices, NEdges}) where {NVe
     return num_positions * num_vertex_states * num_edge_states + 1  # +1 for terminal state
 end
 
-# we define an iterator over it
+# we define an iterator over the state space
 function Base.iterate(pomdp::GraphExplorationPOMDP{NVertices, NEdges}, i::Int=1) where {NVertices, NEdges}
     if i > length(pomdp)
         return nothing
     end
     s = state_from_index(pomdp, i)
     return (s, i+1)
-end
-
-function POMDPs.initialstate(pomdp::GraphExplorationPOMDP{NVertices, NEdges}) where {NVertices, NEdges}
-    initial_pos = (1, 1)  # Agent starts at position (1,1)
-    visited_vertices = SVector{NVertices, Bool}(fill(false, NVertices))  # All vertices are unvisited
-    visited_edges = SVector{NEdges, Bool}(fill(false, NEdges))          # All edges are unvisited
-    return GraphState{NVertices, NEdges}(initial_pos, visited_vertices, visited_edges)
 end

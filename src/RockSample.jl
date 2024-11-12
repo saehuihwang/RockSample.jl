@@ -31,19 +31,10 @@ Represents the state in a RockSamplePOMDP problem.
 - `pos::RPos` position of the robot
 - `rocks::SVector{K, Bool}` the status of the rocks (false=bad, true=good)
 """
-using StaticArrays
-
-struct GraphState{NVertices, NEdges}
-    pos::Tuple{Int, Int}                         # Agent's position (x, y)
-    visited_vertices::SVector{NVertices, Bool}   # Visited status of vertices
-    visited_edges::SVector{NEdges, Bool}         # Visited status of edges
+struct RSState{K}
+    pos::RSPos 
+    rocks::SVector{K, Bool}
 end
-
-# struct GraphExplorationPOMDP{NVertices, NEdges} <: POMDP{GraphState{NVertices, NEdges}, GraphAction, GraphObservation}
-#     grid_size::Tuple{Int, Int}
-#     terminal_state::GraphState{NVertices, NEdges}
-#     # Additional fields as needed (e.g., positions of vertices and edges)
-# end
 
 @with_kw struct RockSamplePOMDP{K} <: POMDP{RSState{K}, Int, Int}
     map_size::Tuple{Int, Int} = (5,5)
