@@ -2,28 +2,74 @@ function POMDPs.stateindex(pomdp::RockSamplePOMDP{K}, s::RSState{K}) where K
     if isterminal(pomdp, s)
         return length(pomdp)
     end
-    return s.pos[1] + pomdp.indices[1] * (s.pos[2]-1) + dot(view(pomdp.indices, 2:(K+1)), s.rocks)
+    nx, ny = pomdp.grid_size
+
+    # Agent's position index
+    pos_index = s.pos[1] + nx * (s.pos[2] - 1)
+
+    # Indices for visited vertices and edges
+    # this creates a binary number where each bit corresponds to an element in s.visited_vertices.
+    vertex_index = foldl((acc, b) -> 2 * acc + b, s.visited_vertices, init=0)
+    # this creates a binary number where each bit corresponds to an element in s.visited_edges.
+    edge_index = foldl((acc, b) -> 2 * acc + b, s.visited_edges, init=0)
+
+    num_vertex_states = 2^NVertices
+    num_edge_states = 2^NEdges
+
+    # Combine indices
+    index = pos_index +
+            nx * ny * vertex_index +
+            nx * ny * num_vertex_states * edge_index
+
+    return index + 1
 end
 
-function state_from_index(pomdp::RockSamplePOMDP{K}, si::Int) where K
-    if si == length(pomdp)
+
+function state_from_index(pomdp::GraphExplorationPOMDP{NVertices, NEdges}, index::Int) where {NVertices, NEdges}
+    if index == length(pomdp)
         return pomdp.terminal_state
     end
-    rocks_dim = @SVector fill(2, K)
-    nx, ny = pomdp.map_size
-    s = CartesianIndices((nx, ny, rocks_dim...))[si]
-    pos = RSPos(s[1], s[2])
-    rocks = SVector{K, Bool}(s.I[3:(K+2)] .- 1)
-    return RSState{K}(pos, rocks)
+
+    index -= 1  # Adjust for 1-based indexing
+    nx, ny = pomdp.grid_size
+
+    num_positions = nx * ny
+    num_vertex_states = 2^NVertices
+    num_edge_states = 2^NEdges
+
+    # Extract edge index
+    edge_index = div(index, num_positions * num_vertex_states)
+    index %= num_positions * num_vertex_states
+
+    # Extract vertex index
+    vertex_index = div(index, num_positions)
+    pos_index = index % num_positions
+
+    # Reconstruct agent's position
+    x = (pos_index % nx) + 1
+    y = div(pos_index, nx) + 1
+    pos = (x, y)
+
+    # Reconstruct visited vertices and edges
+    visited_vertices = SVector{NVertices, Bool}([Bool((vertex_index >> i) & 1) for i in 0:NVertices-1])
+    visited_edges = SVector{NEdges, Bool}([Bool((edge_index >> i) & 1) for i in 0:NEdges-1])
+
+    return GraphState{NVertices, NEdges}(pos, visited_vertices, visited_edges)
 end
 
 # the state space is the pomdp itself
-POMDPs.states(pomdp::RockSamplePOMDP) = pomdp
+POMDPs.states(pomdp::GraphExplorationPOMDP) = pomdp
 
-Base.length(pomdp::RockSamplePOMDP) = pomdp.map_size[1]*pomdp.map_size[2]*2^length(pomdp.rocks_positions) + 1
+function Base.length(pomdp::GraphExplorationPOMDP{NVertices, NEdges}) where {NVertices, NEdges}
+    nx, ny = pomdp.grid_size
+    num_positions = nx * ny
+    num_vertex_states = 2^NVertices
+    num_edge_states = 2^NEdges
+    return num_positions * num_vertex_states * num_edge_states + 1  # +1 for terminal state
+end
 
 # we define an iterator over it
-function Base.iterate(pomdp::RockSamplePOMDP, i::Int=1)
+function Base.iterate(pomdp::GraphExplorationPOMDP{NVertices, NEdges}, i::Int=1) where {NVertices, NEdges}
     if i > length(pomdp)
         return nothing
     end
@@ -31,11 +77,9 @@ function Base.iterate(pomdp::RockSamplePOMDP, i::Int=1)
     return (s, i+1)
 end
 
-function POMDPs.initialstate(pomdp::RockSamplePOMDP{K}) where K
-    probs = normalize!(ones(2^K), 1)
-    states = Vector{RSState{K}}(undef, 2^K)
-    for (i,rocks) in enumerate(Iterators.product(ntuple(x->[false, true], K)...))
-        states[i] = RSState{K}(pomdp.init_pos, SVector(rocks))
-    end
-    return SparseCat(states, probs)
+function POMDPs.initialstate(pomdp::GraphExplorationPOMDP{NVertices, NEdges}) where {NVertices, NEdges}
+    initial_pos = (1, 1)  # Agent starts at position (1,1)
+    visited_vertices = SVector{NVertices, Bool}(fill(false, NVertices))  # All vertices are unvisited
+    visited_edges = SVector{NEdges, Bool}(fill(false, NEdges))          # All edges are unvisited
+    return GraphState{NVertices, NEdges}(initial_pos, visited_vertices, visited_edges)
 end
