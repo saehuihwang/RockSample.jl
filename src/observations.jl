@@ -24,6 +24,11 @@ function find_vertex_at_position(pos::GraphPos, position_to_vertex::Dict{GraphPo
 end
 
 # find_edge_at_position function
-function find_edge_at_position(pos::GraphPos, position_to_edge::Dict{GraphPos, Int})
-    return get(position_to_edge, pos, nothing)
+function find_edge_at_position(pos::GraphPos, position_to_edge::Dict{Tuple{GraphPos, Symbol}, Int})
+    for ((edge_pos, _), edge_id) in position_to_edge
+        if edge_pos == pos
+            return edge_id
+        end
+    end
+    return nothing  # Return `nothing` if no edge matches the position
 end

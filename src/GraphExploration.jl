@@ -75,11 +75,15 @@ function GraphExplorationPOMDP(;
 )
     nx, ny = grid_size
     max_vertices = nx * ny  # One vertex per grid cell
-    max_edges = 2 * (nx * (ny - 1)) + 2 * ((nx - 1) * ny)  # Maximum number of edges in the grid
+    max_edges = 2 * (nx * (ny - 1)) + 2 * ((nx - 1) * ny)  # Maximum number of edges in the grid up down left right
+    # Create the terminal state based on the actual graph
+    # Determine which vertices and edges are part of the actual graph
+    actual_vertices = Set(values(position_to_vertex))
+    actual_edges = Set(values(position_to_edge))
     terminal_state = GraphState{max_vertices, max_edges}(
-        GraphPos(-1, -1),
-        SVector{max_vertices, Bool}(fill(true, max_vertices)),
-        SVector{max_edges, Bool}(fill(true, max_edges))
+        GraphPos(-1, -1),  # Invalid position signifies termination
+        SVector{max_vertices, Bool}(v in actual_vertices for v in 1:max_vertices),
+        SVector{max_edges, Bool}(e in actual_edges for e in 1:max_edges)
     )
     return GraphExplorationPOMDP{max_vertices, max_edges}(
         grid_size, init_pos, position_to_vertex, position_to_edge, discount_factor, terminal_state
@@ -93,7 +97,8 @@ POMDPs.discount(pomdp::GraphExplorationPOMDP) = pomdp.discount_factor
 
 # Terminal state check
 function POMDPs.isterminal(pomdp::GraphExplorationPOMDP{MaxVertices, MaxEdges}, s::GraphState{MaxVertices, MaxEdges}) where {MaxVertices, MaxEdges}
-    return all(s.visited_vertices) && all(s.visited_edges)
+    return s.visited_vertices == pomdp.terminal_state.visited_vertices &&
+           s.visited_edges == pomdp.terminal_state.visited_edges
 end
 
 # Initial state
