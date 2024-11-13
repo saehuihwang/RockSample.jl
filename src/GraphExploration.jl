@@ -18,7 +18,6 @@ export
     GraphObservation,
     GraphAction,
     apply_action
-    # Export other functions or types as needed
 
 # Define GraphPos as SVector{2, Int}, similar to RSPos in RockSample
 const GraphPos = SVector{2, Int}
@@ -61,7 +60,7 @@ struct GraphExplorationPOMDP{MaxVertices, MaxEdges} <: POMDP{GraphState{MaxVerti
     grid_size::Tuple{Int, Int}
     init_pos::GraphPos
     position_to_vertex::Dict{GraphPos, Int}
-    position_to_edge::Dict{GraphPos, Int}
+    position_to_edge::Dict{Tuple{GraphPos, Symbol}, Int}  # Updated to include direction
     discount_factor::Float64
     terminal_state::GraphState{MaxVertices, MaxEdges}
 end
@@ -70,12 +69,13 @@ end
 function GraphExplorationPOMDP(; 
     grid_size::Tuple{Int, Int},
     position_to_vertex::Dict{GraphPos, Int},
-    position_to_edge::Dict{GraphPos, Int},
+    position_to_edge::Dict{Tuple{GraphPos, Symbol}, Int},
     init_pos::GraphPos = GraphPos(1, 1),
     discount_factor::Float64 = 0.95
 )
-    max_vertices = grid_size[1] * grid_size[2]  # One vertex per grid cell
-    max_edges = (grid_size[1] * grid_size[2])  # Heuristic for edges
+    nx, ny = grid_size
+    max_vertices = nx * ny  # One vertex per grid cell
+    max_edges = 2 * (nx * (ny - 1)) + 2 * ((nx - 1) * ny)  # Maximum number of edges in the grid
     terminal_state = GraphState{max_vertices, max_edges}(
         GraphPos(-1, -1),
         SVector{max_vertices, Bool}(fill(true, max_vertices)),

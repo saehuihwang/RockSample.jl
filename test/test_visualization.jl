@@ -17,12 +17,15 @@ const h = 600  # Height in pixels
 function test_initial_state()
     # Create a sample POMDP instance
     pomdp = GraphExplorationPOMDP(
-        grid_size = (5, 5),
-        position_to_vertex = Dict(GraphPos(2, 2) => 1, GraphPos(3, 3) => 2, GraphPos(4, 4) => 3),
-        position_to_edge = Dict(GraphPos(2, 3) => 1, GraphPos(3, 2) => 2),
-        init_pos = GraphPos(1, 1),
-        discount_factor = 0.95
-    )
+    grid_size = (5, 5),
+    position_to_vertex = Dict(GraphPos(2, 2) => 1, GraphPos(4, 2) => 2, GraphPos(4, 4) => 3),
+    position_to_edge = Dict(
+        (GraphPos(3, 2), :right) => 1,
+        (GraphPos(4, 3), :up) => 2,
+    ),
+    init_pos = GraphPos(1, 1),
+    discount_factor = 0.95
+)
     
     # Get the initial state
     s0 = initialstate(pomdp)
