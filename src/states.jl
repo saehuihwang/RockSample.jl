@@ -2,7 +2,7 @@
 # such as state indexing, state reconstruction from indices, and state space iteration.
 
 # Map a state to a unique index.
-function POMDPs.stateindex(pomdp::GraphExplorationPOMDP{NVertices, NEdges}, s::GraphState{NVertices, NEdges}) where {NVertices, NEdges}
+function POMDPs.stateindex(pomdp::GraphExplorationPOMDP{MaxVertices, MaxEdges}, s::GraphState{MaxVertices, MaxEdges}) where {MaxVertices, MaxEdges}
     if isterminal(pomdp, s)
         return length(pomdp)
     end
@@ -17,8 +17,8 @@ function POMDPs.stateindex(pomdp::GraphExplorationPOMDP{NVertices, NEdges}, s::G
     # this creates a binary number where each bit corresponds to an element in s.visited_edges.
     edge_index = foldl((acc, b) -> 2 * acc + b, s.visited_edges, init=0)
 
-    num_vertex_states = 2^NVertices
-    num_edge_states = 2^NEdges
+    num_vertex_states = 2^MaxVertices
+    num_edge_states = 2^MaxEdges
 
     # Combine indices to get a unique state index
     index = pos_index +
@@ -29,7 +29,7 @@ function POMDPs.stateindex(pomdp::GraphExplorationPOMDP{NVertices, NEdges}, s::G
 end
 
 
-function state_from_index(pomdp::GraphExplorationPOMDP{NVertices, NEdges}, index::Int) where {NVertices, NEdges}
+function state_from_index(pomdp::GraphExplorationPOMDP{MaxVertices, MaxEdges}, index::Int) where {MaxVertices, MaxEdges}
     if index == length(pomdp)
         return pomdp.terminal_state
     end
@@ -38,8 +38,8 @@ function state_from_index(pomdp::GraphExplorationPOMDP{NVertices, NEdges}, index
     nx, ny = pomdp.grid_size
 
     num_positions = nx * ny
-    num_vertex_states = 2^NVertices
-    num_edge_states = 2^NEdges
+    num_vertex_states = 2^MaxVertices
+    num_edge_states = 2^MaxEdges
 
     # Extract edge index
     edge_index = div(index, num_positions * num_vertex_states)
@@ -55,26 +55,26 @@ function state_from_index(pomdp::GraphExplorationPOMDP{NVertices, NEdges}, index
     pos = GraphPos(x, y)
 
     # Reconstruct visited vertices and edges
-    visited_vertices = SVector{NVertices, Bool}([Bool((vertex_index >> i) & 1) for i in 0:NVertices-1])
-    visited_edges = SVector{NEdges, Bool}([Bool((edge_index >> i) & 1) for i in 0:NEdges-1])
+    visited_vertices = SVector{MaxVertices, Bool}([Bool((vertex_index >> i) & 1) for i in 0:MaxVertices-1])
+    visited_edges = SVector{MaxEdges, Bool}([Bool((edge_index >> i) & 1) for i in 0:MaxEdges-1])
 
-    return GraphState{NVertices, NEdges}(pos, visited_vertices, visited_edges)
+    return GraphState{MaxVertices, MaxEdges}(pos, visited_vertices, visited_edges)
 end
 
 # the state space is the pomdp itself
 POMDPs.states(pomdp::GraphExplorationPOMDP) = pomdp
 
 # Calculates the total number of states
-function Base.length(pomdp::GraphExplorationPOMDP{NVertices, NEdges}) where {NVertices, NEdges}
+function Base.length(pomdp::GraphExplorationPOMDP{MaxVertices, MaxEdges}) where {MaxVertices, MaxEdges}
     nx, ny = pomdp.grid_size
     num_positions = nx * ny
-    num_vertex_states = 2^NVertices
-    num_edge_states = 2^NEdges
+    num_vertex_states = 2^MaxVertices
+    num_edge_states = 2^MaxEdges
     return num_positions * num_vertex_states * num_edge_states + 1  # +1 for terminal state
 end
 
 # we define an iterator over the state space
-function Base.iterate(pomdp::GraphExplorationPOMDP{NVertices, NEdges}, i::Int=1) where {NVertices, NEdges}
+function Base.iterate(pomdp::GraphExplorationPOMDP{MaxVertices, MaxEdges}, i::Int=1) where {MaxVertices, MaxEdges}
     if i > length(pomdp)
         return nothing
     end

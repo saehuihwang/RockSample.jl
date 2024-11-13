@@ -1,7 +1,8 @@
 # +1 for visiting a new vertex or edge.
 # -1 for revisiting a vertex or edge.
 # +10 for completing the exploration.
-import ..observations: find_vertex_at_position, find_edge_at_position
+include("observations.jl")
+# using .observations: find_vertex_at_position, find_edge_at_position
 
 function POMDPs.reward(pomdp::GraphExplorationPOMDP, s::GraphState, a::GraphAction)
     # Apply the action to get the new position

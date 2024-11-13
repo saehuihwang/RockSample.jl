@@ -1,31 +1,41 @@
-pomdp = RockSamplePOMDP{3}()
+using Random
+# using GraphExploration
+using POMDPs
+using POMDPTools
+using Test
+using Compose
+include("../src/GraphExploration.jl")
+using .GraphExploration
+import Cairo, Fontconfig
+
+
+# Set the width and height globally
+const w = 800  # Width in pixels
+const h = 600  # Height in pixels
+
+# Test function for visualization
 function test_initial_state()
-	rng = MersenneTwister(2)
-	s0 = rand(rng, initialstate(pomdp))
-	
-	c = render(pomdp, (s=s0, a=6))
-    c = render(pomdp, (s=s0, a=6, b=Deterministic(s0)))
-    c = render(pomdp, (s=s0, a=6, b=initialstate(pomdp)))
-	c |> SVG("rocksample.svg")
+    # Create a sample POMDP instance
+    pomdp = GraphExplorationPOMDP(
+        grid_size = (5, 5),
+        position_to_vertex = Dict(GraphPos(2, 2) => 1, GraphPos(3, 3) => 2, GraphPos(4, 4) => 3),
+        position_to_edge = Dict(GraphPos(2, 3) => 1, GraphPos(3, 2) => 2),
+        init_pos = GraphPos(1, 1),
+        discount_factor = 0.95
+    )
+    
+    # Get the initial state
+    s0 = initialstate(pomdp)
+
+    # Define a step with a state and an action
+    step = (s = s0, a = :right)
+
+    # Call the render function
+    c = POMDPTools.render(pomdp, step)
+
+    # Save the visualization as PNG
+    c |> PNG("graphexploration_initial.png", w, h)
+    println("Visualization saved to graphexploration_initial.png")
 end
 
-function test_particle_collection()
-    b0 = ParticleCollection{RSState{3}}(
-            RSState{3}[
-                RSState{3}([1, 1], Bool[1, 0, 0]), RSState{3}([1, 1], Bool[1, 1, 1]), 
-                RSState{3}([1, 1], Bool[0, 0, 1]), RSState{3}([1, 1], Bool[1, 0, 1]), 
-                RSState{3}([1, 1], Bool[1, 0, 0]), RSState{3}([1, 1], Bool[1, 1, 0]), 
-                RSState{3}([1, 1], Bool[0, 1, 0]), RSState{3}([1, 1], Bool[1, 1, 0]), 
-                RSState{3}([1, 1], Bool[1, 0, 1]), RSState{3}([1, 1], Bool[0, 1, 1]),
-                RSState{3}([1, 1], Bool[0, 0, 1]), RSState{3}([1, 1], Bool[1, 0, 0]), 
-                RSState{3}([1, 1], Bool[1, 0, 1]), RSState{3}([1, 1], Bool[0, 1, 1]), 
-                RSState{3}([1, 1], Bool[0, 1, 1]), RSState{3}([1, 1], Bool[1, 1, 0]), 
-                RSState{3}([1, 1], Bool[1, 1, 1]), RSState{3}([1, 1], Bool[0, 0, 1]), 
-                RSState{3}([1, 1], Bool[1, 1, 1]), RSState{3}([1, 1], Bool[1, 0, 1])
-            ], 
-            nothing
-        )
-    s0 = rand(b0)
-    c = render(pomdp, (s=s0, a=6, b=b0))
-    c |> SVG("rocksample2.svg")
-end
+test_initial_state()

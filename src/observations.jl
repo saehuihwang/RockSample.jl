@@ -19,11 +19,11 @@ function observation_from_state(pomdp::GraphExplorationPOMDP, s::GraphState)
 end
 
 # find_vertex_at_position function
-function find_vertex_at_position(pos::GraphPos, position_to_vertex::Dict{Tuple{Int, Int}, Int})
+function find_vertex_at_position(pos::GraphPos, position_to_vertex::Dict{GraphPos, Int})
     return get(position_to_vertex, pos, nothing)
 end
 
 # find_edge_at_position function
-function find_edge_at_position(pos::GraphPos, position_to_edge::Dict{Tuple{Int, Int}, Int})
+function find_edge_at_position(pos::GraphPos, position_to_edge::Dict{GraphPos, Int})
     return get(position_to_edge, pos, nothing)
 end

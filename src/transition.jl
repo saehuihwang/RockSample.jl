@@ -1,10 +1,11 @@
 # This file defines the state transition dynamics of the GraphExplorationPOMDP.
 # It specifies how the state changes in response to an action.
 # The transitions are deterministic in this model.
-import ..observations: find_vertex_at_position, find_edge_at_position
+include("observations.jl")
+# using .observations: find_vertex_at_position, find_edge_at_position
 
 # Define the transition function as per the POMDPs.jl interface.
-function POMDPs.transition(pomdp::GraphExplorationPOMDP{NVertices, NEdges}, s::GraphState{NVertices, NEdges}, a::GraphAction) where {NVertices, NEdges}
+function POMDPs.transition(pomdp::GraphExplorationPOMDP{MaxVertices, MaxEdges}, s::GraphState{MaxVertices, MaxEdges}, a::GraphAction) where {MaxVertices, MaxEdges}
     if POMDPs.isterminal(pomdp, s)
         return Deterministic(pomdp.terminal_state)
     end
@@ -38,7 +39,7 @@ function POMDPs.transition(pomdp::GraphExplorationPOMDP{NVertices, NEdges}, s::G
     end
 
     # Constructs the new state with the updated position and visited statuses.
-    new_state = GraphState{NVertices, NEdges}(new_pos, visited_vertices, visited_edges)
+    new_state = GraphState{MaxVertices, MaxEdges}(new_pos, visited_vertices, visited_edges)
 
     # Check if the new state is terminal
     if POMDPs.isterminal(pomdp, new_state)
