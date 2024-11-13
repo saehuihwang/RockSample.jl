@@ -51,7 +51,7 @@ end
 
 # Compute the new position based on the action.
 function apply_action(pos::GraphPos, a::GraphAction, grid_size::Tuple{Int, Int})
-    x, y = pos.x, pos.y
+    x, y = pos[1], pos[2]
     nx, ny = grid_size
     if a == :up
         new_pos = GraphPos(x, y + 1)

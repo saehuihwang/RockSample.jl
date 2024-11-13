@@ -5,10 +5,21 @@
 
 
 # observation function
+# Observations based on action and state transition
 function POMDPs.observation(pomdp::GraphExplorationPOMDP, a::GraphAction, s::GraphState, sp::GraphState)
-    # Observation depends on the new state sp
-    obs = observation_from_state(pomdp, sp)
-    return Deterministic(obs)
+    return Deterministic(observation_from_state(pomdp, sp))
+end
+
+# Observations based on state only (for belief sampling or debugging)
+function POMDPs.observation(pomdp::GraphExplorationPOMDP, s::GraphState)
+    return Deterministic(observation_from_state(pomdp, s))
+end
+
+function POMDPs.observations(pomdp::GraphExplorationPOMDP{MaxVertices, MaxEdges}) where {MaxVertices, MaxEdges}
+    vertex_ids = [nothing; collect(1:MaxVertices)]
+    edge_ids = [nothing; collect(1:MaxEdges)]
+    obs_list = [GraphObservation(v, e) for v in vertex_ids, e in edge_ids]
+    return obs_list
 end
 
 # Helper function to get observation from state

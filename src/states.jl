@@ -61,23 +61,59 @@ function state_from_index(pomdp::GraphExplorationPOMDP{MaxVertices, MaxEdges}, i
     return GraphState{MaxVertices, MaxEdges}(pos, visited_vertices, visited_edges)
 end
 
-# the state space is the pomdp itself
-POMDPs.states(pomdp::GraphExplorationPOMDP) = pomdp
-
-# Calculates the total number of states
-function Base.length(pomdp::GraphExplorationPOMDP{MaxVertices, MaxEdges}) where {MaxVertices, MaxEdges}
+function POMDPs.states(pomdp::GraphExplorationPOMDP)
     nx, ny = pomdp.grid_size
-    num_positions = nx * ny
-    num_vertex_states = 2^MaxVertices
-    num_edge_states = 2^MaxEdges
-    return num_positions * num_vertex_states * num_edge_states + 1  # +1 for terminal state
+    positions = [(x, y) for x in 1:nx, y in 1:ny]
+
+    # Determine all possible combinations of visited vertices and edges
+    num_vertices = length(pomdp.position_to_vertex)
+    num_edges = length(pomdp.position_to_edge)
+
+    visited_vertices_combinations = Iterators.product([true, false] for _ in 1:num_vertices)
+    visited_edges_combinations = Iterators.product([true, false] for _ in 1:num_edges)
+
+    # Generate all valid states
+    valid_states = []
+    for pos in positions
+        for visited_vertices in visited_vertices_combinations
+            for visited_edges in visited_edges_combinations
+                # Validate the state, ensuring empty cells are considered
+                if is_valid_state(pomdp, pos, visited_vertices, visited_edges)
+                    push!(valid_states, GraphState(pos, visited_vertices, visited_edges))
+                end
+            end
+        end
+    end
+
+    return valid_states
 end
 
-# we define an iterator over the state space
-function Base.iterate(pomdp::GraphExplorationPOMDP{MaxVertices, MaxEdges}, i::Int=1) where {MaxVertices, MaxEdges}
-    if i > length(pomdp)
+# Helper function to validate a state
+function is_valid_state(pomdp::GraphExplorationPOMDP, pos::Tuple{Int, Int}, visited_vertices, visited_edges)
+    v_id = find_vertex_at_position(pos, pomdp.position_to_vertex)
+    e_id = find_edge_at_position(pos, pomdp.position_to_edge)
+
+    # If the cell is neither a vertex nor an edge, it's valid
+    if v_id === nothing && e_id === nothing
+        return true
+    end
+
+    # If the cell is a vertex, it cannot also be an edge
+    if v_id !== nothing && e_id !== nothing
+        return false
+    end
+
+    return true
+end
+
+function Base.length(pomdp::GraphExplorationPOMDP)
+    return length(POMDPs.states(pomdp))
+end
+
+function Base.iterate(pomdp::GraphExplorationPOMDP, i::Int=1)
+    states = POMDPs.states(pomdp)
+    if i > length(states)
         return nothing
     end
-    s = state_from_index(pomdp, i)
-    return (s, i+1)
+    return (states[i], i + 1)
 end

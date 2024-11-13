@@ -2,14 +2,15 @@ const MOVEMENT_ACTIONS = [:up, :down, :left, :right]
 
 function generate_teleport_actions(grid_size::Tuple{Int, Int})
     nx, ny = grid_size
-    return [(x, y) for x in 1:nx, y in 1:ny]
+    return [(x, y) for x in 1:nx, y in 1:ny] |> vec
 end
 
 # movement actions and teleportation actions
 function POMDPs.actions(pomdp::GraphExplorationPOMDP)
     teleport_actions = generate_teleport_actions(pomdp.grid_size)
-    return vcat(MOVEMENT_ACTIONS, teleport_actions)
+    return Union{Symbol, Tuple{Int, Int}}[MOVEMENT_ACTIONS...; teleport_actions...]  # Ensure same type
 end
+
 # Maps an action to its index.
 # Movement actions are indices 1 to 4.
 # Teleportation actions are indices 5 to 4 + (nx * ny)
