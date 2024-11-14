@@ -59,6 +59,6 @@ function POMDPs.actions(pomdp::GraphExplorationPOMDP, s::GraphState)
 end
 
 function POMDPs.actions(pomdp::GraphExplorationPOMDP, b)
-    state = rand(b)
-    return POMDPs.actions(pomdp, state)
+    state = rand(Random.GLOBAL_RNG, b) 
+    return actions(pomdp, state)
 end

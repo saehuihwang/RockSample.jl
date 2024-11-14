@@ -47,6 +47,7 @@ function POMDPs.transition(pomdp::GraphExplorationPOMDP{MaxVertices, MaxEdges}, 
     if POMDPs.isterminal(pomdp, new_state)
         return Deterministic(pomdp.terminal_state)
     else
+        println("testing transition" + Deterministic(new_state))
         return Deterministic(new_state)
     end
 end

@@ -73,8 +73,8 @@ function GraphExplorationPOMDP(;
     init_pos::GraphPos = GraphPos(1, 1),
     discount_factor::Float64 = 0.95
 )
-    max_vertices = length(position_to_vertex)
-    max_edges = length(position_to_edge)
+    max_vertices = grid_size[1] * grid_size[2]
+    max_edges = grid_size[1] * grid_size[2]
     # Create the terminal state based on the actual graph
     terminal_state = GraphState{max_vertices, max_edges}(
         GraphPos(-1, -1),  # Invalid position signifies termination

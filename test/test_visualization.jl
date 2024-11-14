@@ -145,8 +145,7 @@ function test_simulation()
         init_pos = GraphPos(1, 1),
         discount_factor = 0.95
     )
-    s = initialstate(pomdp)
-    s = initialstate(pomdp)
+    s = first(POMDPs.states(pomdp))
     a = :right
     sp_dist = POMDPs.transition(pomdp, s, a)
     println("Sampled next state: ", rand(sp_dist))
@@ -232,11 +231,12 @@ function test_initial_state()
     )
     
     # Get the initial state
-    s0 = initialstate(pomdp)
-
+    b0 = initialstate(pomdp)
+    s0 = rand(b0)
     # Define a step with a state and an action
     step = (s = s0, a = :right)
-
+    println("Step: ", step)
+    println(s0)
     # Call the render function
     c = POMDPTools.render(pomdp, step)
 
@@ -276,7 +276,7 @@ function test_simulation_steps()
     discount_factor = 0.95
 )
     # Initialize state
-    s = initialstate(pomdp)
+    s = first(POMDPs.states(pomdp))
     total_reward = 0.0
 
     # Define a sequence of actions to test
@@ -286,9 +286,9 @@ function test_simulation_steps()
     for (t, a) in enumerate(actions)
         println("Step $t:")
         println("Action: $a")
-        
+        println("State: ", s)
         # Get the next state (unwrap Deterministic to extract state)
-        sp_dist = POMDPs.transition(pomdp, s, a)
+        sp_dist = transition(pomdp, s, a)
         sp = rand(sp_dist)  # Extract state from Deterministic distribution
 
         # Get the reward
@@ -344,10 +344,10 @@ function test_solver()
 end
 
 # Run the tests
-test_transition_function()
-test_observation_function()
-test_reward_function()
-test_simulation()
-test_sarsop_solver()
-# test_initial_state()
-# test_simulation_steps()
+# test_transition_function()
+# test_observation_function()
+# test_reward_function()
+# test_simulation()
+# test_sarsop_solver()
+test_initial_state()
+test_simulation_steps()
