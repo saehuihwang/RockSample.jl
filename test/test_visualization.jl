@@ -16,13 +16,8 @@ using Distributions
 const w = 800  # Width in pixels
 const h = 600  # Height in pixels
 
-using POMDPPolicies
-using POMDPSimulators
-
-using Distributions
-
-using Distributions
-using Random
+# using POMDPPolicies
+# using POMDPSimulators
 
 # Extend Random.Sampler for Deterministic distributions
 function Random.Sampler(::Type{<:AbstractRNG}, d::Deterministic{T}, ::Val{1}) where {T}
@@ -220,12 +215,6 @@ function test_sarsop_solver()
     println("SARSOP Solver test passed.")
 end
 
-# Run the tests
-test_transition_function()
-test_observation_function()
-test_reward_function()
-test_simulation()
-test_sarsop_solver()
 
 
 # Test function for visualization
@@ -354,4 +343,11 @@ function test_solver()
     simulate(sim, pomdp, policy)
 end
 
-# test_solver()
+# Run the tests
+test_transition_function()
+test_observation_function()
+test_reward_function()
+test_simulation()
+test_sarsop_solver()
+# test_initial_state()
+# test_simulation_steps()

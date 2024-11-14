@@ -10,16 +10,33 @@ function POMDPs.observation(pomdp::GraphExplorationPOMDP, a::GraphAction, s::Gra
     return Deterministic(observation_from_state(pomdp, sp))
 end
 
+# Define obsindex to map each observation to a unique index
+function POMDPs.obsindex(pomdp::GraphExplorationPOMDP, obs::GraphObservation)
+    # Get all possible observations
+    all_obs = POMDPs.observations(pomdp)
+
+    # Find the index of the given observation
+    index = findfirst(x -> x == obs, all_obs)
+
+    if index === nothing
+        error("Observation $obs is not valid for this POMDP.")
+    end
+
+    return index
+end
+
 # Observations based on state only (for belief sampling or debugging)
 function POMDPs.observation(pomdp::GraphExplorationPOMDP, s::GraphState)
     return Deterministic(observation_from_state(pomdp, s))
 end
 
-function POMDPs.observations(pomdp::GraphExplorationPOMDP{MaxVertices, MaxEdges}) where {MaxVertices, MaxEdges}
-    vertex_ids = [nothing; collect(1:MaxVertices)]
-    edge_ids = [nothing; collect(1:MaxEdges)]
-    obs_list = [GraphObservation(v, e) for v in vertex_ids, e in edge_ids]
-    return obs_list
+function POMDPs.observations(pomdp::GraphExplorationPOMDP)
+    # Enumerate all possible observations
+    vertices = [nothing; collect(1:length(pomdp.position_to_vertex))]
+    edges = [nothing; collect(1:length(pomdp.position_to_edge))]
+
+    # Create all combinations of vertex and edge observations
+    return [GraphObservation(v, e) for v in vertices for e in edges]
 end
 
 # Helper function to get observation from state

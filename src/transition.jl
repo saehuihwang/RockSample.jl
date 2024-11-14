@@ -12,33 +12,35 @@ function POMDPs.transition(pomdp::GraphExplorationPOMDP{MaxVertices, MaxEdges}, 
 
     # Compute new position based on action
     new_pos = apply_action(s.pos, a, pomdp.grid_size)
-    
-    # Clamp new position to grid bounds. ensure new position is within grid
+
+    # Clamp new position to grid bounds
     nx, ny = pomdp.grid_size
     x_new, y_new = new_pos
     x_new = clamp(x_new, 1, nx)
     y_new = clamp(y_new, 1, ny)
     new_pos = GraphPos(x_new, y_new)
-    
+
     # Copy visited statuses
     visited_vertices = s.visited_vertices
     visited_edges = s.visited_edges
-    
-    # Update visited vertices. check if there's vertex at new position. 
-    v_id = find_vertex_at_position(new_pos, pomdp.position_to_vertex) # defined in observations.jl
-     # if vertex hasn't been visited, update status to true
-    if v_id !== nothing && !visited_vertices[v_id]
-        visited_vertices = Base.setindex(visited_vertices, true, v_id)
+
+    # Update visited vertices
+    v_id = find_vertex_at_position(new_pos, pomdp.position_to_vertex)
+    if v_id !== nothing
+        if !visited_vertices[v_id]
+            visited_vertices = Base.setindex(visited_vertices, true, v_id)
+        end
     end
 
-    # Update visited edges. check if there's edge at new position. 
-    e_id = find_edge_at_position(new_pos, pomdp.position_to_edge) # defined in observations.jl
-    # if edge hasn't been visited, update status to truw
-    if e_id !== nothing && !visited_edges[e_id]
-        visited_edges = Base.setindex(visited_edges, true, e_id)
+    # Update visited edges
+    e_id = find_edge_at_position(new_pos, pomdp.position_to_edge)
+    if e_id !== nothing
+        if !visited_edges[e_id]
+            visited_edges = Base.setindex(visited_edges, true, e_id)
+        end
     end
 
-    # Constructs the new state with the updated position and visited statuses.
+    # Construct the new state
     new_state = GraphState{MaxVertices, MaxEdges}(new_pos, visited_vertices, visited_edges)
 
     # Check if the new state is terminal
